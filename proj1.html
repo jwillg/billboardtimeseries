@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Billboard top 10</title>
+    <style>
+        @import "../proj1/styles.css";
+    </style>
+    <style>
+        .tooltip {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<span style="font-size: x-large; ">Billboard top 10 BPM data</span>
+
+
+<script src="https://d3js.org/d3.v4.min.js"></script>
+
+<script>
+    const width = 4000, height = 500,
+        margin = {top: 20, right: 20, bottom: 40, left: 40},
+        contentWidth =  width - margin.left - margin.right,
+        contentHeight = height - margin.top - margin.bottom;
+
+    const svg = d3.select("body")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    svg.append("defs")
+        .append("clipPath")
+        .attr("id", "theClipPath")
+        .append("rect")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", contentWidth)
+        .attr("height", contentHeight);
+
+    const content = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`).attr("clip-path", "url(#theClipPath)");
+    //Tooltip
+    let div = d3.select("body").append("div").attr("class", "tooltip").attr("opacity", 0);
+
+    d3.csv("data.csv", row => {
+        row.WeekID = d3.timeParse('%m/%d/%Y')(row.WeekID);
+        row.BPM = +row.BPM;
+        return row;
+    }, (error, data) => {
+        if (error) throw error;
+
+        //X-axis
+        const xAxisG = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top + contentHeight})`);
+        const xScale = d3.scaleTime().domain(d3.extent(data.map(d => d.WeekID))).range([0, contentWidth]);
+        const xAxis = d3.axisBottom(xScale).tickFormat(d3.timeFormat("%b %Y")).ticks(52);
+        xAxisG.transition().duration(1000).call(xAxis);
+
+        //Y-axis
+        const yAxisG = svg.append('g').attr("transform", `translate(${margin.left}, ${margin.top})`);
+        const yScale = d3.scaleLinear().domain([65, d3.max(data.map(d => d.BPM)) + 10]).range([contentHeight, 0]);
+        const yAxis = d3.axisLeft(yScale);
+        yAxisG.transition().duration(1000).call(yAxis);
+
+
+
+
+
+    });
+
+
+    function getPSelection(){
+        let selection = document.getElementById("positions").value;
+        if (selection == 1){
+            const datafile = "data1.csv";
+            const color = "magenta";
+            graphCreate(datafile,color);
+        }
+        else if (selection == 2){
+            const datafile = "data2.csv";
+            const color = "steelBlue";
+            graphCreate(datafile,color);
+        }
+        else if (selection == 3){
+            const datafile = "data3.csv";
+            const color = "green";
+            graphCreate(datafile,color);
+        }
+        else if (selection == 4){
+            const datafile = "data4.csv";
+            const color = "orange";
+            graphCreate(datafile,color);
+        }
+        else if (selection == 5){
+            const datafile = "data5.csv";
+            const color = "purple";
+            graphCreate(datafile,color);
+        }
+        else if (selection == 6){
+            const datafile = "data6.csv";
+            const color = "darkred";
+            graphCreate(datafile,color);
+        }
+        else if (selection == 7){
+            const datafile = "data7.csv";
+            const color = "blue";
+            graphCreate(datafile,color);
+        }
+        else if (selection == 8){
+            const datafile = "data8.csv";
+            const color = "greenyellow";
+            graphCreate(datafile,color);
+        }
+        else if (selection == 9){
+            const datafile = "data9.csv";
+            const color = "indigo";
+            graphCreate(datafile,color);
+        }
+        else if (selection == 10){
+            const datafile = "data10.csv";
+            const color = "darkslategrey";
+            graphCreate(datafile,color);
+        }
+    }
+
+
+    function graphCreate(datafile, color){
+        d3.csv(datafile, row => {
+            row.WeekID = d3.timeParse('%m/%d/%Y')(row.WeekID);
+            row.BPM = +row.BPM;
+            row.Performer = row.Performer;
+            return row;
+        }, (error, data) => {
+            if (error) throw error;
+
+            //X-axis
+            const xAxisG = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top + contentHeight})`);
+            const xScale = d3.scaleTime().domain(d3.extent(data.map(d => d.WeekID))).range([0, contentWidth]);
+            const xAxis = d3.axisBottom(xScale).tickFormat(d3.timeFormat("%b %Y")).ticks(52);
+
+            //Y-axis
+            const yAxisG = svg.append('g').attr("transform", `translate(${margin.left}, ${margin.top})`);
+            const yScale = d3.scaleLinear().domain([65, d3.max(data.map(d => d.BPM)) + 10]).range([contentHeight, 0]);
+            const yAxis = d3.axisLeft(yScale);
+
+            const graph = content.append("g");
+            const lineGen = d3.line().x(d => xScale(d.WeekID)).y(d => yScale(d.BPM));
+            let linePath = graph.append("path").datum(data).attr("d", lineGen).attr("fill", "none")
+                .attr("stroke", color).attr("stroke-width", "2px");
+
+            let totalLength = linePath.node().getTotalLength();
+            linePath
+                .attr("stroke-dasharray", totalLength + " " + totalLength)
+                .attr("stroke-dashoffset", totalLength)
+                .transition()
+                .duration(4000)
+                .ease(d3.easeLinear)
+                .attr("stroke-dashoffset", 0);
+
+
+
+            let circles = graph.selectAll("circle").data(data).enter().append("circle").call(createCircle);
+
+
+
+
+            function createCircle(theCircle) {
+                return theCircle.attr("cx", d => xScale(d.WeekID))
+                    .attr("cy", d => yScale(d.BPM)).attr("r", 5)
+                    .attr("fill", "black")
+                    .on("mouseover", d => {
+                        div.style('left', d3.event.pageX + "px").style("top", d3.event.pageY + "px");
+                        div.transition().duration(1000).style("opacity", 1);
+                        div.html(d.BPM.toFixed(0)+ " " + d.Song + " by " + d.Performer);
+
+                        paused = true;
+                    })
+                    .on("mouseout", d =>{
+                        div.transition().duration(1000).style("opacity", 0);
+                        paused = false;
+                    })   .call(blinkWhenValue); // blink
+
+            }
+
+            function blinkWhenValue(d){
+                let song = songSearch();
+                return d.transition()
+                    .duration(d=>d.BPM>100)
+                    .attr("fill", "black")
+                    .attr("r", 5)
+                    .on("end", function(d) {
+                        if (d.Song == song)
+                            return d3.active(this).transition().duration(500)
+                                .attr('r', 10)
+                                .attr("fill", "red")
+                                .call(blinkWhenValue);
+                    });
+
+            }
+
+
+        });
+    }
+
+    function scrollBar() {
+        const body = document.body; // For Safari
+        const html = document.documentElement; // Chrome, Firefox, IE and Opera places the overflow at the html level, unless else is specified. Therefore, we use the documentElement property for these browsers
+        body.scrollLeft += 30;
+        body.scrollTop += 10;
+        html.scrollLeft += 30;
+        html.scrollTop += 10;
+    }
+
+
+    function drawavgline() {
+
+
+        d3.csv("data.csv", row => {
+            row.WeekID = d3.timeParse('%m/%d/%Y')(row.WeekID);
+            row.BPM = +row.BPM;
+            return row;
+        }, (error, data) => {
+            if (error) throw error;
+
+            //X-axis
+            const xAxisG = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top + contentHeight})`);
+            const xScale = d3.scaleTime().domain(d3.extent(data.map(d => d.WeekID))).range([0, contentWidth]);
+            const xAxis = d3.axisBottom(xScale).tickFormat(d3.timeFormat("%b %Y")).ticks(52);
+
+            //Y-axis
+            const yAxisG = svg.append('g').attr("transform", `translate(${margin.left}, ${margin.top})`);
+            const yScale = d3.scaleLinear().domain([65, d3.max(data.map(d => d.BPM)) + 10]).range([contentHeight, 0]);
+            const yAxis = d3.axisLeft(yScale);
+
+            const average = d3.mean(data.map(d => { return d.BPM}));
+            console.log(average);
+            const graph = content.append("g");
+            const lineGen = d3.line().x(d => xScale(d.WeekID)).y(yScale(average));
+            let linePath = graph.append("path").datum(data).attr("d", lineGen).attr("fill", "none")
+                .attr("stroke", "peru").attr("stroke-width", "3px");
+        });
+
+
+
+    }
+
+    function songSearch() {
+        let songName = document.getElementById("songname").value;
+        console.log(songName);
+
+        return songName;
+    }
+
+    function snackBar() {
+        // Get the snackbar DIV
+        const x = document.getElementById("snackbar");
+
+        // Add the "show" class to DIV
+        x.className = "show";
+
+        // After 3 seconds, remove the show class from DIV
+        setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+    }
+
+</script>
+
+
+
+<p style = "font-size: large">The Y-Axis is BPM (beats per minute), the X-Axis is Date in Month/Year.</p>
+
+<select id = "positions" onchange="getPSelection();"><
+    <option value = "0">Select Position</option>
+    <option value = "1" style="color:Magenta" >1st</option>
+    <option value = "2" style="color:steelblue">2nd</option>
+    <option value = "3" style="color:green">3rd</option>
+    <option value = "4" style="color:orange">4th</option>
+    <option value = "5" style="color:purple">5th</option>
+    <option value = "6" style="color:darkred">6th</option>
+    <option value = "7" style="color:blue">7th</option>
+    <option value = "8" style="color:greenyellow">8th</option>
+    <option value = "9" style="color:indigo">9th</option>
+    <option value = "10" style="color:darkslategrey">10th</option>
+</select>
+
+
+<button value="refresh" onClick="window.location.reload()">Reset graph</button>
+<button value="avg" onClick="drawavgline();">Average line</button>
+
+Search for Song <input id = "songname" type="text"  placeholder="See You Again" name="sname" onsubmit = "songSearch();">
+<input type="submit" value="Submit" onclick = "snackBar();">
+<div id="snackbar">Song Selected!</div>
+
+
+<p style = "font-size: medium">This data is the billboard top 100 data.</p>
+<p style = "font-size: medium">Select out of the top 10 positions you'd like to see  the time series data of
+                                by using the drop down menu. The color in the drop down menu corresponds to the line
+                                on the graph.</p>
+<p style = "font-size: medium">After typing in a song name and hitting submit, select the position which you'd like
+                                the song to be highlighted on.</p>
+<p style = "font-size: medium">Press the Reset graph button to reset the graph.</p>
+<p style = "font-size: medium">Press the Average line button to view the average BPM of the data.</p>
+
+</body>
+</html>
