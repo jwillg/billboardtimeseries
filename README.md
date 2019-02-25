@@ -1,6 +1,6 @@
 # Billboard top 100 time series data
 ## Video
-[![](https://youtu.be/D1Mz1bwLVa4](https://youtu.be/D1Mz1bwLVa4)<br/>
+[![Video of application](http://i3.ytimg.com/vi/D1Mz1bwLVa4/maxresdefault.jpg)](https://youtu.be/D1Mz1bwLVa4)
 ## Application link
 [Billboard top 100 BPM data](https://jwillg.github.io/billboardtimeseries/proj1.html)
 ## Overview
