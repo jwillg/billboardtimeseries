@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Billboard top 10</title>
+    <style>
+        @import "../proj1/styles.css";
+    </style>
+    <style>
+        .tooltip {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Billboard top 10 BPM data</h2>
+<p id="rightlabel">Position</p>
+
+<script src="project1.js"></script>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+
+<script>
+
+    const width = 4000, height = 500,
+        margin = {top: 20, right: 20, bottom: 40, left: 40},
+        contentWidth =  width - margin.left - margin.right,
+        contentHeight = height - margin.top - margin.bottom;
+
+    const svg = d3.select("body")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    svg.append("defs")
+        .append("clipPath")
+        .attr("id", "theClipPath")
+        .append("rect")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", contentWidth)
+        .attr("height", contentHeight);
+
+    const content = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`).attr("clip-path", "url(#theClipPath)");
+    //Tooltip
+    let div = d3.select("body").append("div").attr("class", "tooltip").attr("opacity", 0);
+
+
+    d3.csv("songdata/data.csv", row => {
+        row.WeekID = d3.timeParse('%m/%d/%Y')(row.WeekID);
+        row.BPM = +row.BPM;
+        row.WeekPosition = row.WeekPosition;
+        row.Song = row.Song;
+        return row;
+    }, (error, data) => {
+        if (error) throw error;
+
+
+
+        //X-axis
+        const xAxisG = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top + contentHeight})`);
+        const xScale = d3.scaleTime().domain(d3.extent(data.map(d => d.WeekID))).range([0, contentWidth]);
+        const xAxis = d3.axisBottom(xScale).tickFormat(d3.timeFormat("%b %Y")).ticks(52);
+        xAxisG.transition().duration(1000).call(xAxis);
+
+        //Y-axis
+        const yAxisG = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
+        const yScale = d3.scaleLinear().domain([1, 10]).range([0,contentHeight]);
+        const yAxis = d3.axisLeft(yScale).tickSize(-width,0,0);
+
+
+        yAxisG.transition().duration(1000).call(yAxis);
+
+
+
+    });
+
+
+    function graphCreate(data){
+        d3.csv(data, row => {
+            row.WeekID = d3.timeParse('%m/%d/%Y')(row.WeekID);
+            row.BPM = +row.BPM;
+            row.Performer = row.Performer;
+            row.WeekPosition = +row.WeekPosition;
+            row.Song = row.Song;
+            return row;
+        }, (error, data) => {
+            if (error) throw error;
+
+
+
+            //X-axis
+            const xAxisG = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top + contentHeight})`);
+            const xScale = d3.scaleTime().domain(d3.extent(data.map(d => d.WeekID))).range([0, contentWidth]);
+            const xAxis = d3.axisBottom(xScale).tickFormat(d3.timeFormat("%b %Y")).ticks(52);
+            console.log(contentWidth);
+
+            //Y-axis
+            const yAxisG = svg.append('g').attr("transform", `translate(${margin.left}, ${margin.top})`);
+            const yScale = d3.scaleLinear().domain([1, 10]).range([0,contentHeight]);
+            const yAxis = d3.axisLeft(yScale);
+
+
+            const graph = content.append("g");
+
+            const lineGen = d3.line().x(d => xScale(d.WeekID)).y(d => yScale(d.WeekPosition));
+            let linePath = graph.append("path").datum(data).attr("d", lineGen).attr("fill", "none")
+                .attr("stroke", "Black").attr("stroke-width", "2px");
+
+            let totalLength = linePath.node().getTotalLength();
+            linePath
+                .attr("stroke-dasharray", totalLength + " " + totalLength)
+                .attr("stroke-dashoffset", totalLength)
+                .transition()
+                .duration(4000)
+                .ease(d3.easeLinear)
+                .attr("stroke-dashoffset", 0);
+
+
+            let circles = graph.selectAll("circle").data(data).enter().append("circle").call(createCircle);
+
+
+            d3.selectAll("circle").transition().duration(500).attr("fill",d=> {
+                if (d.BPM >= 160)
+                    return "#a50026";
+                else if(d.BPM >= 150)
+                    return "#d73027";
+                else if(d.BPM >= 140)
+                    return "#f46d43";
+                else if(d.BPM >=130)
+                    return "#fdae61";
+                else if (d.BPM >= 120)
+                    return "#fee090";
+                else if (d.BPM >= 110)
+                    return "#e0f3f8";
+                else if (d.BPM >= 100)
+                    return "#abd9e9";
+                else if (d.BPM >= 90)
+                    return "#74add1";
+                else if (d.BPM >= 80)
+                    return "#4575b4";
+                else if (d.BPM >= 70)
+                    return "#313695";
+                else
+                    return "black";
+            });
+
+
+
+            function createCircle(theCircle) {
+                return theCircle.attr("cx", d => xScale(d.WeekID))
+                    .attr("cy", d => yScale(d.WeekPosition)).attr("r", 5)
+                    .attr("fill", "black")
+                    .on("mouseover", d => {
+                        div.style('left', d3.event.pageX + "px").style("top", d3.event.pageY + "px");
+                        div.transition().duration(1000).style("opacity", 1);
+                        div.html(d.BPM.toFixed(0)+ " " + d.Song + " by " + d.Performer);
+
+                        paused = true;
+                    })
+                    .on("mouseout", d =>{
+                        div.transition().duration(1000).style("opacity", 0);
+                        paused = false;
+                    })   // blink
+
+
+
+            }
+
+
+        });
+
+    }
+
+    function scrollBar() {
+        const body = document.body; // For Safari
+        const html = document.documentElement; // Chrome, Firefox, IE and Opera places the overflow at the html level, unless else is specified. Therefore, we use the documentElement property for these browsers
+        body.scrollLeft += 30;
+        body.scrollTop += 10;
+        html.scrollLeft += 30;
+        html.scrollTop += 10;
+    }
+
+    function songSearch() {
+        let songName = document.getElementById("songname").value;
+        return songName;
+    }
+    function createGraph(){
+        let song = songSearch();
+        if(songArray.includes(song)){
+            snackBar();
+            let datafile = "songdata/"+song+".csv";
+            graphCreate(datafile);
+        }
+        else{
+            alert("Song \""+song+"\" not found!");
+        }
+    }
+
+    function snackBar() {
+        // Get the snackbar DIV
+        const x = document.getElementById("snackbar");
+
+        // Add the "show" class to DIV
+        x.className = "show";
+
+        // After 3 seconds, remove the show class from DIV
+        setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+    }
+
+
+
+
+    function createGraphArr(songArr) {
+        let x;
+        for (x in songArr){
+            let datafile = "songdata/"+songArr[x]+".csv";
+            graphCreate(datafile);
+        }
+
+
+    }
+
+
+
+    function selectArray(n){
+        if(n===1){
+            createGraphArr(songArray1);
+        }
+        else if(n===2){
+            createGraphArr(songArray2);
+        }
+        else if(n===3){
+            createGraphArr(songArray3);
+        }
+        else if(n===4){
+            createGraphArr(songArray4);
+        }
+        else if(n===5){
+            createGraphArr(songArray5);
+        }
+        else if(n===6){
+            createGraphArr(songArray6);
+        }
+        else if(n===7){
+            createGraphArr(songArray7);
+        }
+        else if(n===8){
+            createGraphArr(songArray8);
+        }
+        else if(n===9){
+            createGraphArr(songArray9);
+        }
+        else if(n===10){
+            createGraphArr(songArray10);
+        }
+    }
+
+
+
+    function itF (){
+        return false;
+    }
+
+    const songArray = [
+        "1-800-273-8255","7 Years", "24K Magic", "679","All About That Bass", "All I Want For Christmas Is You",
+        "All The Stars", "Animals", "ATM", "Attention", "Bad And Boujee","Bad At Love","Bad Blood","Bad Things","Believer","Better Now",
+        "Black Beatles", "Blank Space","Bodak Yellow (Money Moves)","Body Like A Back Road","Boo'd Up","Bounce Back","Broccoli","Cake By The Ocean",
+        "Call Out My Name","Can't Feel My Face","Can't Stop The Feeling!","Castle On The Hill","Centuries","Chained To The Rhythm",
+        "Cheap Thrills", "Cheerleader","Chun-Li","Closer","Cold Water","Congratulations","Dangerous Woman","Deja Vu","Despacito",
+        "Diplomatic Immunity","DNA.","Don't Cry","Don't Let Me Down","Don't Matter To Me","Don't Mind","Don't Wanna Know",
+        "Drag Me Down","Drip Too Hard","Earned It (Fifty Shades Of Grey)","Emotionless","Ex's & Oh's", "Fake Love",
+        "Fake Love (BTS)","Feel It Still","FEFE","Fight Song","Filthy","Finesse","Focus","Formation","FourFiveSeconds",
+        "Freaky Friday","G.D.F.R.","Girls Like You","God Is A Woman", "God's Plan", "Going Bad", "Good For You",
+        "Gucci Gang", "Hands To Myself", "Happier","Havana","Heathens", "Hello","Here","Hey Mama","High Hopes",
+        "Honey, I'm Good.","Hotline Bling","Humble.","I Don't Wanna Live Forever (Fifty Shades Darker)","I Feel It Coming",
+        "I Hate U I Love U","I Like It","I Love It","I Took A Pill In Ibiza","I'm Not The Only One", "I'm The One","I'm Upset","In My Feelings",
+        "iSpy","It Ain't Me","It's The Most Wonderful Time Of The Year","Jealous","Juju On That Beat (TZ Anthem)","Just Like Fire",
+        "Kevin's Heart","Killshot","KOD","Lay Me Down","Lean On","Let It Fly","Let Me Love You","Like I'm Gonna Lose You"
+        ,"Lips Are Movin", "Locked Away", "Look Alive","Look What You Made Me Do","Love Lies", "Love Me Harder","Love Me Like You Do",
+        "Love On The Brain", "Love Yourself","Lucid Dreams","Lucky You","Malibu","Mask Off","Me, Myself & I","Meant To Be",
+        "Mi Gente","MIA","Million Reasons","Mo Bamba","Mona Lisa","MotorSport","My House","My Way","Nasty Freestyle",
+        "Needed Me","Never Be The Same","New Rules","Nice For What","No","No Brainer","No Limit","No Tears Left To Cry",
+        "Nonstop","One Dance","Panda","Paris","Passionfruit","Perfect (OD)","Perfect","Photograph","Piece By Piece",
+        "Pillowtalk","Portland","Pray For Me","Psycho","Purple Rain","Rake It Up","Ready For It","Ride","Rockabye",
+        "Rockstar","Roses","Sad!","Same Old Love","Say Something","Scars To Your Beautiful","See You Again",
+        "Send My Love (To Your New Lover)","Shake It Off","Shallow","Shape Of You","Shut Up And Dance","Sicko Mode",
+        "Side To Side","Sign Of The Times","Somebody","Something Just Like This","Sorry","Sorry Not Sorry","Starboy",
+        "Stargazing","Stay","Stir Fry","Stitches","Stressed Out","Strip That Down","Style","Sugar","Summer Sixteen","Sunflower",
+        "Take Me To Church","Taste","Thank U, Next","That's What I Like","The Hills","The Middle","The Ringer",
+        "There's Nothing Holdin' Me Back","Thinking Out Loud","This Is America","This Is What You Came For","Thunder",
+        "Time Of Our Lives", "Too Good At Goodbyes","Trap Queen","Treat You Better","Tunnel Vision","Unforgettable",
+        "Uproar","Uptown Funk!","Walk It Talk It","Want To Want Me","Watch Me","We Don't Talk Anymore","What Do You Mean",
+        "What Lovers Do","When Doves Cry","Where Are U Now","Wild Thoughts","Wildest Dreams","Without Me","Work",
+        "Work From Home","XO TOUR Llif3","Yes Indeed","Yikes","Youngblood","ZEZE"];
+
+    //160+
+    const songArray1 = ["No Limit","Fight Song","Yikes", "Emotionless","Love On The Brain","Tunnel Vision",
+        "Bad Blood","Stressed Out","Thunder","Send My Love (To Your New Lover)","Just Like Fire","Juju On That Beat (TZ Anthem)",
+        "Ready For It?","Don't Let Me Down","Rockstar","Shake It Off"];
+    //150+
+    const songArray2= ["Side To Side","Hello", "Nonstop","Sicko Mode","XO TOUR Llif3","All I Want For Christmas Is You",
+        "Meant To Be","Lucky You","Humble.","I'm Upset","Mask Off","Rake It Up","Stargazing","Stitches"];
+    //140+
+    const songArray3=["Trap Queen","No","Black Beatles","Broccoli","G.D.F.R.","Mo Bamba","Summer Sixteen","Walk It Talk It",
+        "Better Now","God Is A Woman","Panda","Love Lies","Sorry Not Sorry","KOD","Say Something","DNA.","Ex's & Oh's",
+        "Look Alive","Malibu","Psycho","Watch Me","Wildest Dreams"];
+    //130+
+    const songArray4=["Lips Are Movin","Where Are U Now","Bad Things","Drag Me Down","MotorSport","I Like It","No Brainer",
+        "Portland","Without Me","Castle On The Hill","Hotline Bling","Nasty Freestyle","All About That Bass","Call Out My Name",
+        "Dangerous Woman","Deja Vu","Fake Love","That's What I Like","Freaky Friday","Million Reasons","Never Be The Same"];
+    //120+
+    const songArray5=["Chun-Li","Take Me To Church","Look What You Made Me Do", "Shut Up And Dance","Bad And Boujee","FEFE",
+        "When Doves Cry","Believer","Bodak Yellow (Money Moves)","Girls Like You", "Lay Me Down","Pillowtalk","What Do You Mean",
+        "This Is What You Came For","Time Of Our Lives","Congratulations", "Formation","Honey, I'm Good.","Locked Away",
+        "Mona Lisa","No Tears Left To Cry","There's Nothing Holdin' Me Back", "7 Years","Earned It (Fifty Shades Of Grey)",
+        "Good For You","Gucci Gang","Here","My Way","Sign Of The Times","Sugar","This Is America","Yes Indeed","Youngblood"];
+    //110+
+    const songArray6=["Cake By The Ocean","The Ringer","Bad At Love","Cheerleader",
+        "I Don't Wanna Live Forever (Fifty Shades Darker)","Kevin's Heart","New Rules","Uptown Funk!","Want To Want Me",
+        "Can't Stop The Feeling!","Drip Too Hard","Purple Rain","The Hills","Don't Cry","Me, Myself & I","Passionfruit",
+        "Hands To Myself","Needed Me","What Lovers Do"];
+    //100+
+    const songArray7=["Can't Feel My Face","Like I'm Gonna Lose You","Photograph","24K Magic",
+        "Thank U, Next","The Middle","Killshot","Piece By Piece","Strip That Down","Finesse","Havana","Mi Gente",
+        "Somebody","Work From Home","I Love It","One Dance","Don't Matter To Me","FourFiveSeconds","Love Yourself",
+        "Something Just Like This","I Took A Pill In Ibiza","Rockabye","It's The Most Wonderful Time Of The Year",
+        "Pray For Me","1-800-273-8255","Attention","Don't Mind","Don't Wanna Know","Focus","Happier","It Ain't Me",
+        "Let Me Love You","Paris","Perfect (OD)","Roses","Sorry","We Don't Talk Anymore"];
+    //90+
+    const songArray8=["Body Like A Back Road", "Love Me Harder","Uproar","Lean On","Same Old Love","Taste","Unforgettable",
+        "Wild Thoughts","ZEZE","All The Stars", "Filthy","MIA","Scars To Your Beautiful","Blank Space","Shallow","Shape Of You",
+        "679","Animals","Chained To The Rhythm", "Closer","Love Me Like You Do","Perfect","Style","My House","Cold Water",
+        "I Feel It Coming","I Hate U I Love U", "Jealous","Nice For What","Starboy","Too Good At Goodbyes","Work",
+        "In My Feelings","Stir Fry","Cheap Thrills", "Heathens","Sunflower"];
+    //80+
+    const songArray9=["Despacito","Let It Fly","Centuries","Going Bad","Hey Mama", "Stay","Lucid Dreams","Treat You Better",
+        "ATM","Boo'd Up","High Hopes","I'm Not The Only One","Bounce Back", "I'm The One","See You Again"];
+    //<=80
+    const songArray10=["Feel It Still","Thinking Out Loud","Fake Love (BTS)","God's Plan","Diplomatic Immunity",
+        "iSpy","Ride","Sad!"];
+
+
+</script>
+<p id="bottomlabel">Date (Month Year)</p>
+
+Search for Song <input id = "songname" type="text"  placeholder="See You Again" name="sname" onsubmit = "itF()" onclick="songSearch()">
+<input id ="sn" type="button" value="Submit" onsubmit="itF()" onclick = "createGraph()">
+<div id="snackbar">Song Found!</div>
+<p></p>
+<div class="square" style="background-color:#a50026" onClick="selectArray(1)">160+ <br>BPM</div>
+<div class="square" style="background-color:#d73027" onClick="selectArray(2)">150+ <br>BPM</div>
+<div class="square" style="background-color:#f46d43;color:black" onClick="selectArray(3)">140+ <br>BPM</div>
+<div class="square" style="background-color:#fdae61;color:black" onClick="selectArray(4)">130+ <br>BPM</div>
+<div class="square" style="background-color:#fee090;color:black" onClick="selectArray(5)">120+ <br>BPM</div>
+<div class="square" style="background-color:#e0f3f8;color:black" onClick="selectArray(6)">110+ <br>BPM</div>
+<div class="square" style="background-color:#abd9e9;color:black" onClick="selectArray(7)">100+ <br>BPM</div>
+<div class="square" style="background-color:#74add1;color:black" onClick="selectArray(8)">90+ <br>BPM</div>
+<div class="square" style="background-color:#4575b4;color:black" onClick="selectArray(9)">80+ <br>BPM</div>
+<div class="square" style="background-color:#313695" onClick="selectArray(10)"><80<br>BPM</div>
+
+
+
+
+</body>
+</html>
