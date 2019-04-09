@@ -1,12 +1,12 @@
 # Updated: Billboard top 100 time series data
 ## What's New
 ### Additions
-Gridlines
-Responsive 10-class color scheme
+Gridlines\
+Responsive 10-class color scheme\
 Individual Song Search Bar
 ### Deletions
-Average line button
-Reset button
+Average line button\
+Reset button\
 Old description
 
 # Old: Billboard top 100 time series data
