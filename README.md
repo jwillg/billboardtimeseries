@@ -1,4 +1,6 @@
 # Updated: Billboard top 100 time series data
+## Application link
+[Billboard top 100 BPM data](https://jwillg.github.io/billboardtimeseries/proj1v2.html)
 ## What's New
 ### Additions
 Gridlines\
@@ -14,7 +16,7 @@ Old description
 Click the image below to view a video of the application.
 [![Video of application](http://i3.ytimg.com/vi/D1Mz1bwLVa4/maxresdefault.jpg)](https://youtu.be/D1Mz1bwLVa4)
 ## Application link
-[Billboard top 100 BPM data](https://jwillg.github.io/billboardtimeseries/proj1.html)
+N/A
 ## Overview
 The purpose of this application is to visualize the billboard's top song data in order to compare BPM (beats per minute) using D3js. Data was obtained from kcmillersean at data.world and BPM data was obtained from tunebat. 
 ## Using the application
