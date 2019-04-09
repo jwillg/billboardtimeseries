@@ -1,4 +1,15 @@
-# Billboard top 100 time series data
+# Updated: Billboard top 100 time series data
+## What's New
+### Additions
+Gridlines
+Responsive 10-class color scheme
+Individual Song Search Bar
+### Deletions
+Average line button
+Reset button
+Old description
+
+# Old: Billboard top 100 time series data
 ## Video
 Click the image below to view a video of the application.
 [![Video of application](http://i3.ytimg.com/vi/D1Mz1bwLVa4/maxresdefault.jpg)](https://youtu.be/D1Mz1bwLVa4)
