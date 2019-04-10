@@ -4,29 +4,28 @@
     <meta charset="UTF-8">
     <title>Billboard top 10</title>
     <style>
-        @import "styles.css";
+        @import "../proj1/styles.css";
     </style>
-    <style>
-        .tooltip {
-            position: absolute;
-            opacity: 0;
-            pointer-events: none;
-        }
-    </style>
+
 </head>
 <body>
+
 
 <h2>Billboard top 10 BPM data</h2>
 <p id="rightlabel">Position</p>
 
+<script src="project1.js"></script>
 <script src="https://d3js.org/d3.v4.min.js"></script>
+
+<div class="rect" id="borderRect" ></div>
 
 <script>
 
-    const width = 4000, height = 500,
+    const width = 1500, height = 500,
         margin = {top: 20, right: 20, bottom: 40, left: 40},
         contentWidth =  width - margin.left - margin.right,
         contentHeight = height - margin.top - margin.bottom;
+
 
     const svg = d3.select("body")
         .append("svg")
@@ -42,16 +41,19 @@
         .attr("width", contentWidth)
         .attr("height", contentHeight);
 
+
+
+
+
     const content = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`).attr("clip-path", "url(#theClipPath)");
     //Tooltip
     let div = d3.select("body").append("div").attr("class", "tooltip").attr("opacity", 0);
 
 
+
     d3.csv("songdata/data.csv", row => {
         row.WeekID = d3.timeParse('%m/%d/%Y')(row.WeekID);
         row.BPM = +row.BPM;
-        row.WeekPosition = row.WeekPosition;
-        row.Song = row.Song;
         return row;
     }, (error, data) => {
         if (error) throw error;
@@ -61,52 +63,41 @@
         //X-axis
         const xAxisG = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top + contentHeight})`);
         const xScale = d3.scaleTime().domain(d3.extent(data.map(d => d.WeekID))).range([0, contentWidth]);
-        const xAxis = d3.axisBottom(xScale).tickFormat(d3.timeFormat("%b %Y")).ticks(52);
+        const xAxis = d3.axisBottom(xScale).tickFormat(d3.timeFormat("%b%y'")).ticks(d3.timeMonth.every(1));
         xAxisG.transition().duration(1000).call(xAxis);
 
         //Y-axis
         const yAxisG = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
-        const yScale = d3.scaleLinear().domain([1, 10]).range([0,contentHeight]);
-        const yAxis = d3.axisLeft(yScale).tickSize(-width,0,0);
+        const yScale = d3.scaleLinear().domain([1, 100]).range([0,contentHeight]);
+        const yAxis = d3.axisLeft(yScale).tickSize(-contentWidth,0,0);
 
 
         yAxisG.transition().duration(1000).call(yAxis);
-
 
 
     });
 
 
     function graphCreate(data){
+        localStorage.clear();
         d3.csv(data, row => {
             row.WeekID = d3.timeParse('%m/%d/%Y')(row.WeekID);
             row.BPM = +row.BPM;
-            row.Performer = row.Performer;
             row.WeekPosition = +row.WeekPosition;
-            row.Song = row.Song;
             return row;
         }, (error, data) => {
             if (error) throw error;
 
-
-
-            //X-axis
-            const xAxisG = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top + contentHeight})`);
             const xScale = d3.scaleTime().domain(d3.extent(data.map(d => d.WeekID))).range([0, contentWidth]);
-            const xAxis = d3.axisBottom(xScale).tickFormat(d3.timeFormat("%b %Y")).ticks(52);
-            console.log(contentWidth);
 
-            //Y-axis
-            const yAxisG = svg.append('g').attr("transform", `translate(${margin.left}, ${margin.top})`);
-            const yScale = d3.scaleLinear().domain([1, 10]).range([0,contentHeight]);
-            const yAxis = d3.axisLeft(yScale);
+            const yScale = d3.scaleLinear().domain([1, 100]).range([0,contentHeight]);
 
 
             const graph = content.append("g");
 
             const lineGen = d3.line().x(d => xScale(d.WeekID)).y(d => yScale(d.WeekPosition));
             let linePath = graph.append("path").datum(data).attr("d", lineGen).attr("fill", "none")
-                .attr("stroke", "Black").attr("stroke-width", "2px");
+                .attr("stroke", "Black").attr("stroke-width", "0.5px");
 
             let totalLength = linePath.node().getTotalLength();
             linePath
@@ -118,41 +109,16 @@
                 .attr("stroke-dashoffset", 0);
 
 
+
             let circles = graph.selectAll("circle").data(data).enter().append("circle").call(createCircle);
 
 
-            d3.selectAll("circle").transition().duration(500).attr("fill",d=> {
-                if (d.BPM >= 160)
-                    return "#a50026";
-                else if(d.BPM >= 150)
-                    return "#d73027";
-                else if(d.BPM >= 140)
-                    return "#f46d43";
-                else if(d.BPM >=130)
-                    return "#fdae61";
-                else if (d.BPM >= 120)
-                    return "#fee090";
-                else if (d.BPM >= 110)
-                    return "#e0f3f8";
-                else if (d.BPM >= 100)
-                    return "#abd9e9";
-                else if (d.BPM >= 90)
-                    return "#74add1";
-                else if (d.BPM >= 80)
-                    return "#4575b4";
-                else if (d.BPM >= 70)
-                    return "#313695";
-                else
-                    return "black";
-            });
 
 
 
             function createCircle(theCircle) {
                 return theCircle.attr("cx", d => xScale(d.WeekID))
-                    .attr("cy", d => yScale(d.WeekPosition)).attr("r", 5)
-                    .attr("fill", "black")
-                    .on("mouseover", d => {
+                    .attr("cy", d => yScale(d.WeekPosition)).attr("r", 5)  .on("mouseover", d => {
                         div.style('left', d3.event.pageX + "px").style("top", d3.event.pageY + "px");
                         div.transition().duration(1000).style("opacity", 1);
                         div.html(d.BPM.toFixed(0)+ " " + d.Song + " by " + d.Performer);
@@ -162,7 +128,32 @@
                     .on("mouseout", d =>{
                         div.transition().duration(1000).style("opacity", 0);
                         paused = false;
-                    })   // blink
+                    })
+                        //circle loading
+                        .style("opacity", 0).transition().delay(function(d,i){ return i * 10;}).duration(2000).attr("fill",d=> {
+                        if (d.BPM >= 160)
+                            return "#a50026";
+                        else if(d.BPM >= 150)
+                            return "#d73027";
+                        else if(d.BPM >= 140)
+                            return "#f46d43";
+                        else if(d.BPM >=130)
+                            return "#fdae61";
+                        else if (d.BPM >= 120)
+                            return "#fee090";
+                        else if (d.BPM >= 110)
+                            return "#e0f3f8";
+                        else if (d.BPM >= 100)
+                            return "#abd9e9";
+                        else if (d.BPM >= 90)
+                            return "#74add1";
+                        else if (d.BPM >= 80)
+                            return "#4575b4";
+                        else if (d.BPM >= 70)
+                            return "#313695";
+                        else
+                            return "black";
+                    }).style("opacity", 1);
 
 
 
@@ -170,8 +161,10 @@
 
 
         });
+        localStorage.clear(); //local storage
 
     }
+
 
     function scrollBar() {
         const body = document.body; // For Safari
@@ -183,8 +176,7 @@
     }
 
     function songSearch() {
-        let songName = document.getElementById("songname").value;
-        return songName;
+        return document.getElementById("songname").value;
     }
     function createGraph(){
         let song = songSearch();
@@ -257,6 +249,10 @@
         }
     }
 
+    function allGraphs() {
+        createGraphArr(songArray);
+    }
+
 
 
     function itF (){
@@ -298,7 +294,7 @@
     //160+
     const songArray1 = ["No Limit","Fight Song","Yikes", "Emotionless","Love On The Brain","Tunnel Vision",
         "Bad Blood","Stressed Out","Thunder","Send My Love (To Your New Lover)","Just Like Fire","Juju On That Beat (TZ Anthem)",
-        "Ready For It?","Don't Let Me Down","Rockstar","Shake It Off"];
+        "Ready For It","Don't Let Me Down","Rockstar","Shake It Off"];
     //150+
     const songArray2= ["Side To Side","Hello", "Nonstop","Sicko Mode","XO TOUR Llif3","All I Want For Christmas Is You",
         "Meant To Be","Lucky You","Humble.","I'm Upset","Mask Off","Rake It Up","Stargazing","Stitches"];
@@ -327,7 +323,7 @@
         "Somebody","Work From Home","I Love It","One Dance","Don't Matter To Me","FourFiveSeconds","Love Yourself",
         "Something Just Like This","I Took A Pill In Ibiza","Rockabye","It's The Most Wonderful Time Of The Year",
         "Pray For Me","1-800-273-8255","Attention","Don't Mind","Don't Wanna Know","Focus","Happier","It Ain't Me",
-        "Let Me Love You","Paris","Perfect (OD)","Roses","Sorry","We Don't Talk Anymore"];
+        "Let Me Love You","Paris","Perfect (OD)","Roses","Sorry","We Don't Talk Anymore","Stay"];
     //90+
     const songArray8=["Body Like A Back Road", "Love Me Harder","Uproar","Lean On","Same Old Love","Taste","Unforgettable",
         "Wild Thoughts","ZEZE","All The Stars", "Filthy","MIA","Scars To Your Beautiful","Blank Space","Shallow","Shape Of You",
@@ -335,15 +331,17 @@
         "I Feel It Coming","I Hate U I Love U", "Jealous","Nice For What","Starboy","Too Good At Goodbyes","Work",
         "In My Feelings","Stir Fry","Cheap Thrills", "Heathens","Sunflower"];
     //80+
-    const songArray9=["Despacito","Let It Fly","Centuries","Going Bad","Hey Mama", "Stay","Lucid Dreams","Treat You Better",
+    const songArray9=["Despacito","Let It Fly","Centuries","Going Bad","Hey Mama","Lucid Dreams","Treat You Better",
         "ATM","Boo'd Up","High Hopes","I'm Not The Only One","Bounce Back", "I'm The One","See You Again"];
     //<=80
     const songArray10=["Feel It Still","Thinking Out Loud","Fake Love (BTS)","God's Plan","Diplomatic Immunity",
         "iSpy","Ride","Sad!"];
 
 
+
 </script>
 <p id="bottomlabel">Date (Month Year)</p>
+
 
 Search for Song <input id = "songname" type="text"  placeholder="See You Again" name="sname" onsubmit = "itF()" onclick="songSearch()">
 <input id ="sn" type="button" value="Submit" onsubmit="itF()" onclick = "createGraph()">
@@ -359,6 +357,7 @@ Search for Song <input id = "songname" type="text"  placeholder="See You Again" 
 <div class="square" style="background-color:#74add1;color:black" onClick="selectArray(8)">90+ <br>BPM</div>
 <div class="square" style="background-color:#4575b4;color:black" onClick="selectArray(9)">80+ <br>BPM</div>
 <div class="square" style="background-color:#313695" onClick="selectArray(10)"><80<br>BPM</div>
+<div class="square" style="background-image: linear-gradient(to right, #a50026 ,#313695);" onClick="allGraphs()">All <br>songs</div>
 
 
 
