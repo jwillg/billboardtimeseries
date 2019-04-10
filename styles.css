@@ -12,7 +12,11 @@ h2{
 .input{
     pointer-events:none;
 }
-
+.tooltip {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
 .square {
     height: 50px;
     width: 50px;
@@ -32,6 +36,19 @@ h2{
     stroke: lightgrey;
     stroke-opacity: 0.6;
     stroke-dasharray: 4;
+    font-size: 6pt;
+
+}
+
+#borderRect{
+    border: 1px solid white;
+    border-left-color: black;
+    border-radius: 1px;
+    position: absolute;
+    margin: 20px 20px 40px 1490.2px;
+    width: 1px;
+    height: 440px;
+
 }
 
 
@@ -115,4 +132,3 @@ h2{
 .closebtn:hover {
     color: black;
 }
-
