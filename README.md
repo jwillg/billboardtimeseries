@@ -10,7 +10,8 @@ Top 10 => Top 100 songs displayed\
 All BPM selection button\
 Reduced line thickess\
 One screen width change\
-Additional data animations
+Additional data animations\
+Heatmap
 
 ### Deletions
 Average line button\
@@ -36,10 +37,15 @@ Another finding was, when selecting all BPMs on the visualization, most songs te
 I also found it was easier to look through the songs one might enjoy. For example, since I tend to like song's with higer BPM, I can easily select the 160+, 150+,and 140+ BPM boxes and find which songs I might enjoy.
 ![Image](https://i.imgur.com/8z9giZT.png)
 
-Finally, I want to reiterate how prominent songs written for movies exclusively will stay on the billboard hot 100 for a number of weeks after the movie's release date. In this example, I've selected "Earned It (Fifty Shades of Grey)". Fifty Shades of Grey was released in Feburary 2015, but stayed in the top 100 until November 2015.
+I want to reiterate how prominent songs written for movies exclusively will stay on the billboard hot 100 for a number of weeks after the movie's release date. In this example, I've selected "Earned It (Fifty Shades of Grey)". Fifty Shades of Grey was released in Feburary 2015, but stayed in the top 100 until November 2015.
 ![Image](https://i.imgur.com/G5WZykB.png)
 
-# Old: Billboard top 100 time series data
+With the addition of the heatmap, it can easily be observed that songs that make it to the top ten tend to drop off the Billboard top 100 at around position 50 (marked with a red line).
+![Image](https://i.imgur.com/UND0DWn.png)
+
+## References
+The heatmap was based off of [Philip Davis’s heatmap example](https://bl.ocks.org/philipcdavis/6035183e3508e3c2e8de).
+# Outdated: Billboard top 100 time series data
 ## Video
 Click the image below to view a video of the application.
 [![Video of application](http://i3.ytimg.com/vi/D1Mz1bwLVa4/maxresdefault.jpg)](https://youtu.be/D1Mz1bwLVa4)
