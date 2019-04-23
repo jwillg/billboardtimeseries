@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Billboard top 100</title>
     <style>
-        @import "styles.css";
+        @import "../proj1/styles.css";
     </style>
     <style>
         .tooltip {
@@ -17,10 +17,13 @@
 </head>
 <body>
 
+<a href="index.html">View Heatmap</a>
 
 <h2>Billboard top 100 BPM data</h2>
 <p id="rightlabel">Position</p>
 
+
+<script src="moment.js"></script>
 <script src="project1.js"></script>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 
@@ -50,11 +53,49 @@
 
 
 
-
-
     const content = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`).attr("clip-path", "url(#theClipPath)");
     //Tooltip
     let div = d3.select("body").append("div").attr("class", "tooltip").attr("opacity", 0);
+
+    d3.csv("songdata/data.csv", row => {
+        row.WeekID = d3.timeParse('%m/%d/%Y')(row.WeekID);
+        row.BPM = +row.BPM;
+        row.Song = row.Song;
+        return row;
+    }, (error, data) => {
+        if (error) throw error;
+
+        let dateArray = data.map(d => d.WeekID);
+        console.log(dateArray[0]);
+        console.log(dateArray[1]);
+
+
+        for (let i = 0; i < dateArray.length; i++){
+            dateArray[i] = moment(dateArray[i]).format('MM/DD/YYYY');
+        }
+
+        let dsArray = data.map(d => d. Song);
+        let arrayS = [];
+        let dict = {};
+
+        for (let i = 0; i < dateArray.length-1; i++){
+            if (dateArray[i] === dateArray[i+1]) {
+                arrayS.push(dsArray[i]);
+            }
+            else{
+                arrayS.push(dsArray[i]);
+                dict[dateArray[i-1]] = arrayS;
+                arrayS = [];
+
+            }
+
+        }
+
+        Object.entries(dict).forEach(([key, value]) => {
+            console.log(key);
+        });
+
+    });
 
 
 
@@ -95,6 +136,8 @@
         }, (error, data) => {
             if (error) throw error;
 
+            console.log(data);
+
             const xScale = d3.scaleTime().domain(d3.extent(data.map(d => d.WeekID))).range([0, contentWidth]);
 
             const yScale = d3.scaleLinear().domain([1, 100]).range([0,contentHeight]);
@@ -111,7 +154,6 @@
                 .attr("stroke-dasharray", totalLength + " " + totalLength)
                 .attr("stroke-dashoffset", totalLength)
                 .transition()
-                .duration(4000)
                 .ease(d3.easeLinear)
                 .attr("stroke-dashoffset", 0);
 
@@ -127,17 +169,17 @@
                 return theCircle.attr("cx", d => xScale(d.WeekID))
                     .attr("cy", d => yScale(d.WeekPosition)).attr("r", 5)  .on("mouseover", d => {
                         div.style('left', d3.event.pageX + "px").style("top", d3.event.pageY + "px");
-                        div.transition().duration(1000).style("opacity", 1);
+                        div.transition().style("opacity", 1);
                         div.html(d.BPM.toFixed(0)+ " " + d.Song + " by " + d.Performer);
 
                         paused = true;
                     })
                     .on("mouseout", d =>{
-                        div.transition().duration(1000).style("opacity", 0);
+                        div.transition().style("opacity", 0);
                         paused = false;
                     })
                         //circle loading
-                        .style("opacity", 0).transition().delay(function(d,i){ return i * 10;}).duration(2000).attr("fill",d=> {
+                        .style("opacity", 0).attr("fill",d=> {
                         if (d.BPM >= 160)
                             return "#a50026";
                         else if(d.BPM >= 150)
@@ -249,10 +291,12 @@
             createGraphArr(songArray8);
         }
         else if(n===9){
+
             createGraphArr(songArray9);
         }
         else if(n===10){
             createGraphArr(songArray10);
+
         }
     }
 
@@ -345,6 +389,12 @@
         "iSpy","Ride","Sad!"];
 
 
+    function addborder(){
+        // border: 2px solid #73AD21;
+    }
+
+
+
 
 </script>
 <p id="bottomlabel">Date (Month Year)</p>
@@ -354,17 +404,19 @@ Search for Song <input id = "songname" type="text"  placeholder="See You Again" 
 <input id ="sn" type="button" value="Submit" onsubmit="itF()" onclick = "createGraph()">
 <div id="snackbar">Song Found!</div>
 <p></p>
-<div class="square" style="background-color:#a50026" onClick="selectArray(1)">160+ <br>BPM</div>
-<div class="square" style="background-color:#d73027" onClick="selectArray(2)">150+ <br>BPM</div>
-<div class="square" style="background-color:#f46d43;color:black" onClick="selectArray(3)">140+ <br>BPM</div>
-<div class="square" style="background-color:#fdae61;color:black" onClick="selectArray(4)">130+ <br>BPM</div>
-<div class="square" style="background-color:#fee090;color:black" onClick="selectArray(5)">120+ <br>BPM</div>
-<div class="square" style="background-color:#e0f3f8;color:black" onClick="selectArray(6)">110+ <br>BPM</div>
-<div class="square" style="background-color:#abd9e9;color:black" onClick="selectArray(7)">100+ <br>BPM</div>
+<div class="square" id="sq10" style="background-color:#313695" onClick="selectArray(10)">70+<br>BPM</div>
+<div class="square" id="sq9" style="background-color:#4575b4;color:black;" onClick="selectArray(9)">80+ <br>BPM</div>
 <div class="square" style="background-color:#74add1;color:black" onClick="selectArray(8)">90+ <br>BPM</div>
-<div class="square" style="background-color:#4575b4;color:black" onClick="selectArray(9)">80+ <br>BPM</div>
-<div class="square" style="background-color:#313695" onClick="selectArray(10)"><80<br>BPM</div>
-<div class="square" style="background-image: linear-gradient(to right, #a50026 ,#313695);" onClick="allGraphs()">All <br>BPM</div>
+<div class="square" style="background-color:#abd9e9;color:black" onClick="selectArray(7)">100+ <br>BPM</div>
+<div class="square" style="background-color:#e0f3f8;color:black" onClick="selectArray(6)">110+ <br>BPM</div>
+<div class="square" style="background-color:#fee090;color:black" onClick="selectArray(5)">120+ <br>BPM</div>
+<div class="square" style="background-color:#fdae61;color:black" onClick="selectArray(4)">130+ <br>BPM</div>
+<div class="square" style="background-color:#f46d43;color:black" onClick="selectArray(3)">140+ <br>BPM</div>
+<div class="square" style="background-color:#d73027" onClick="selectArray(2)">150+ <br>BPM</div>
+<div class="square" style="background-color:#a50026" onClick="selectArray(1)">160+ <br>BPM</div>
+
+
+<div class="square" style="background-image: linear-gradient(to right,#313695,#a50026);" onClick="allGraphs()">All <br>songs</div>
 
 
 

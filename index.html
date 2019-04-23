@@ -1,0 +1,285 @@
+<!--Code referenced from Philip Davis’s heatmap example-->
+<!--https://bl.ocks.org/philipcdavis/6035183e3508e3c2e8de-->
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<head>
+    <title>Billboard top 100 Heatmap</title>
+    <style>
+
+        #chart {
+            background-color: #fff;
+            margin-left: 0px;
+            margin-right: auto;
+        }
+
+
+        rect.bordered {
+            stroke: #E6E6E6;
+            stroke-width:2px;
+
+        }
+
+        text {
+            font-family: helvetica, arial, sans-serif;
+            fill: #444;
+            font-size: 10px;
+        }
+
+
+        .row-hide {
+            display: none;
+        }
+
+        .row-show {
+            display: none;
+        }
+
+        .d3-tip {
+            line-height: 1.4;
+            font-weight: bold;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            border-radius: 3px;
+            margin-top: -7px;
+            font-family: sans-serif;
+            font-size: 12px;
+        }
+
+        /* Creates a small triangle extender for the tooltip */
+        .d3-tip:after {
+            box-sizing: border-box;
+            display: inline;
+            font-size: 10px;
+            width: 100%;
+            line-height: 1;
+            color: rgba(0, 0, 0, 0.8);
+            content: "\25BC";
+            position: absolute;
+            text-align: center;
+        }
+
+        /* Style northward tooltips differently */
+        .d3-tip.n:after {
+            margin: -1px 0 0 0;
+            top: 98%;
+            left: 0;
+        }
+
+        .light {
+            color: #bbb;
+        }
+
+
+
+    </style>
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.7.1/d3-tip.js"></script>
+
+
+</head>
+<body>
+<a href="proj1v2.html">View Time Series</a>
+
+
+<div id="chart"></div>
+
+<script type="text/javascript">
+
+    d3.json("dataf.json", function(error, data) {
+        if (error) return console.warn(error);
+
+        let xAxisName = "WeekID";
+        let yAxisName = "WeekPosition";
+        let value = "BPM";
+        let name = "Song";
+        let xAxisArray = [];
+        let yAxisArray = [];
+        let dataArray = [];
+        let valueArray = [];
+        let truncY = [];
+        let truncX = [];
+
+        let rangeArray = [70,170];
+
+        for (let i =0; i<data.length; i++) {
+            xAxisArray.push(data[i][xAxisName]);
+            yAxisArray.push(data[i][yAxisName]);
+            let round = (Math.round(data[i][value] * 100) / 100);
+            valueArray.push(data[i][value]);
+            //This array stores the values as numbers
+            dataArray.push({yAxis: data[i][yAxisName], Value: round, xAxis: data[i][xAxisName], xAxisName: data[i][xAxisName], yAxisName: data[i][yAxisName],
+            name: data[i][name]});
+        };
+        xAxisArray = _.uniq(xAxisArray);
+        yAxisArray = _.uniq(yAxisArray);
+        xAxisArray = xAxisArray;
+        yAxisArray = yAxisArray.sort(function(a, b){return a-b});
+
+
+        for (let i = 0; i<dataArray.length;i++) {
+            for (let j = 0; j<xAxisArray.length; j++) {
+                if (xAxisArray[j] == dataArray[i].xAxis) {
+                    dataArray[i].xAxis = j;
+                }
+            }
+            for (let j = 0; j<yAxisArray.length; j++) {
+                if (yAxisArray[j] == dataArray[i].yAxis) {
+                    dataArray[i].yAxis = j;
+                }
+            }
+        };
+
+        /* Truncate Values */
+        for (let i = 0; i < yAxisArray.length; i++) {
+            if (yAxisArray[i].length > 20) {
+                truncY.push(yAxisArray[i].substring(0, 20) + '...');
+            } else {
+                truncY.push(yAxisArray[i]);
+            }
+        }
+
+        for (let i = 0; i < xAxisArray.length; i++) {
+            if (xAxisArray[i].length > 30) {
+                truncX.push(xAxisArray[i].substring(0, 30) + '...');
+            } else {
+                truncX.push(xAxisArray[i]);
+            }
+        }
+
+
+        let margin = { top: 170, right: 100, bottom: 100, left: 100 },
+            xAxisData = xAxisArray,
+            yAxisData = yAxisArray,
+            gridSize = 15;
+
+        let width = xAxisData.length * gridSize,
+            height = yAxisData.length * gridSize,
+            legendWidth = 50,
+            buckets = 9,
+            colors = ["#313695","#4575b4","#74add1","#abd9e9","#e0f3f8", "#fee090","#fdae61","#f46d43","#d73027","#a50026"];
+
+
+        let colorScale = d3.scale.quantile()
+            .domain(rangeArray)
+            .range(colors);
+
+        let svg = d3.select("#chart").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+        let yAxis = svg.selectAll(".yAxis")
+            .data(truncY)
+            .enter().append("text")
+            .text(function (d) { return d; })
+            .attr("x", 0)
+            .attr("y", function (d, i) { return i * gridSize; })
+            .style("text-anchor", "end")
+            .attr("transform", "translate(-6," + gridSize / 1.5 + ")")
+            .attr("class", "yAxis");
+
+
+        let xAxis = svg.selectAll(".xAxis")
+            .data(truncX)
+            .enter().append("svg:g");
+        xAxis.append("text")
+            .text(function(d) { return d; })
+            .style("text-anchor", "start")
+            .attr("x", 6)
+            .attr("y", 7)
+            .attr("class", "xAxis")
+            .attr("transform", function(d, i) { return "translate(" + i * gridSize + ", -6)rotate(-45)" });
+
+        /* Initialize tooltip */
+        let tip = d3.tip()
+            .attr('class', 'd3-tip')
+            .html(function(d) { return "<div> <span class='light'>" + value + ":</span> " + d.Value + "</div>" +
+                "<div><span class='light'>" + xAxisName + ":</span> " + d.xAxisName + "</div>"
+                + "<div> <span class='light'>" + yAxisName + ": </span>" + d.yAxisName + "</div>"
+                + "<div> <span class='light'>" + name + ": </span>" + d.name + "</div>"; })
+
+        let heatMap = svg.selectAll(".heat")
+            .data(dataArray)
+            .enter().append("rect")
+            .attr("x", function(d) { return (d.xAxis) * gridSize; })
+            .attr("y", function(d) { return (d.yAxis) * gridSize; })
+            .attr("rx", 2)
+            .attr("ry", 2)
+            .attr("class", "heat bordered")
+            .attr("width", gridSize)
+            .attr("height", gridSize)
+            .style("fill", colors[0])
+            .on('mouseover', tip.show)
+            .on('mouseout', tip.hide);
+
+        heatMap
+            .transition()
+            .duration(1000)
+            .style("fill", function(d) { return colorScale(d.Value); });
+
+
+        heatMap.call(tip);
+
+
+        svg.selectAll(".vline").data(d3.range(xAxisData.length + 1)).enter()
+            .append("line")
+            .attr("x1", function (d) {
+                return d * gridSize;
+            })
+            .attr("x2", function (d) {
+                return d * gridSize;
+            })
+            .attr("y1", function (d) {
+                return 0;
+            })
+            .attr("y2", function (d) {
+                return height;
+            })
+            .style("stroke", "#eee");
+
+
+        svg.selectAll(".hline").data(d3.range(yAxisData.length + 1)).enter()
+            .append("line")
+            .attr("y1", function (d) {
+                return d * gridSize;
+            })
+            .attr("y2", function (d) {
+                return d * gridSize;
+            })
+            .attr("x1", function (d) {
+                return 0;
+            })
+            .attr("x2", function (d) {
+                return width;
+            })
+            .style("stroke", "#eee");
+
+
+        let legend = svg.selectAll(".legend")
+            .data([70].concat(colorScale.quantiles()), function(d) { return d; })
+            .enter().append("g")
+            .attr("class", "legend");
+
+        legend.append("rect")
+            .attr("x", function(d, i) { return legendWidth * i; })
+            .attr("y", yAxisData.length * gridSize + 40)
+            .attr("width", legendWidth)
+            .attr("height", 20);
+
+        legend.style("fill", function(d, i) { return colors[i]; });
+
+        legend.append("text")
+            .text(function(d) { return "" + Math.round(d); })
+            .attr("x", function(d, i) { return legendWidth * i; })
+            .attr("y", yAxisData.length * gridSize + 75);
+
+    });
+
+</script>
+</body>
+</html>
